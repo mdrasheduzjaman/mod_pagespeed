@@ -32,6 +32,7 @@ const char HttpAttributes::kAccessControlAllowCredentials[] =
     "Access-Control-Allow-Credentials";
 const char HttpAttributes::kAge[] = "Age";
 const char HttpAttributes::kAllow[] = "Allow";
+const char HttpAttributes::kAlternateProtocol[] = "Alternate-Protocol";
 const char HttpAttributes::kAttachment[] = "attachment";
 const char HttpAttributes::kAuthorization[] = "Authorization";
 const char HttpAttributes::kCacheControl[] = "Cache-Control";
@@ -190,13 +191,14 @@ const char* HttpStatus::GetReasonPhrase(HttpStatus::Code rc) {
 
 StringPieceVector HttpAttributes::SortedHopByHopHeaders() {
   // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-  const int kReserveSize = 10;
+  const int kReserveSize = 11;
   int index = 0;
   StringPieceVector names(kReserveSize);
 
   // This exact mechanism of initializing the names is used because it allows
   // populating a StringPieceVector from locally defined string constants
   // without having runtime calls to strlen to find the length.
+  names[index++] = StringPiece(HttpAttributes::kAlternateProtocol);
   names[index++] = StringPiece(HttpAttributes::kConnection);
   names[index++] = StringPiece(HttpAttributes::kKeepAlive);
   names[index++] = StringPiece(HttpAttributes::kProxyAuthenticate);

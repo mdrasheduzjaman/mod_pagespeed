@@ -491,16 +491,64 @@ void ResponseHeaders::SetOriginalContentLength(int64 content_length) {
 }
 
 bool ResponseHeaders::Sanitize() {
-  // Remove cookies, which we will never store in a cache.
+  ConstStringStarVector v;
+  bool changed = false;
+
+  // Sanitize any fields mentioned in the Connection: header
+  if (Lookup(HttpAttributes::kConnection, &v)) {
+    for (int i = 0, n = v.size(); i < n; ++i) {
+      if (v[i] != NULL) {
+        changed = RemoveAll(*v[i]) || changed;
+      }
+    }
+  }
+
+  // Remove cookies plus any well-known hop-by-hop headers, which we will never
+  // store in a cache.
   StringPieceVector names_to_sanitize = HttpAttributes::SortedHopByHopHeaders();
-  return RemoveAllFromSortedArray(&names_to_sanitize[0],
-                                  names_to_sanitize.size());
+  changed = RemoveAllFromSortedArray(&names_to_sanitize[0],
+                                  names_to_sanitize.size()) || changed;
+  return changed;
 }
 
 void ResponseHeaders::GetSanitizedProto(HttpResponseHeaders* proto) const {
   Headers<HttpResponseHeaders>::CopyToProto(proto);
   protobuf::RepeatedPtrField<NameValue>* headers = proto->mutable_header();
+
   StringPieceVector names_to_sanitize = HttpAttributes::SortedHopByHopHeaders();
+  StringCompareInsensitive compare;
+
+  // Update the list of headers that should be sanitized so it contains the
+  // header names mentioned in the Connection: header.
+  // TODO(oschaaf): there is some technical debt here, as this duplicates some
+  // of the work that SplitValues from headers.cc could do
+  for (int i = 0, n = headers->size(); i < n; ++i) {
+    if (StringCaseEqual(headers->Get(i).name(), HttpAttributes::kConnection)) {
+      StringPieceVector split;
+      SplitStringPieceToVector(headers->Get(i).value(), ",", &split, true);
+      if (split.empty()) {
+        split.push_back(headers->Get(i).value());
+      }
+
+      // Check each value in Connection: v1, v2, ...
+      for (int j = 0; j < (int)split.size(); ++j) {
+        StringPiece val = split[j];
+        TrimWhitespace(&val);
+        if (val.empty()) {
+          continue;
+        }
+        // Find the position at which we should insert to keep the list sorted ...
+        std::vector<StringPiece>::iterator up =
+          std::lower_bound(names_to_sanitize.begin(), names_to_sanitize.end(), val, compare);
+
+        // ... and insert - but only if the entry is not already contained
+        if (!StringCaseEqual(*up, val)) {
+          names_to_sanitize.insert(up, val);
+        }
+      }
+    }
+  }
+
   RemoveFromHeaders(&names_to_sanitize[0], names_to_sanitize.size(), headers);
 }
 

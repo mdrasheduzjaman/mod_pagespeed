@@ -186,7 +186,8 @@ class ResponseHeaders : public Headers<HttpResponseHeaders> {
   // the original size of optimized resources.
   void SetOriginalContentLength(int64 content_length);
 
-  // Removes cookie headers, and returns true if any changes were made.
+  // Removes hop-by-hop plus cookie headers, and returns true if any changes were
+  // made.
   bool Sanitize();
 
   // Copies the HttpResponseHeaders proto from the response headers to the given

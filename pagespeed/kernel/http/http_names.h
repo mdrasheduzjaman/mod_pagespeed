@@ -36,6 +36,7 @@ struct HttpAttributes {
   static const char kAccessControlAllowCredentials[];
   static const char kAge[];
   static const char kAllow[];
+  static const char kAlternateProtocol[];
   static const char kAttachment[];
   static const char kAuthorization[];
   static const char kCacheControl[];
