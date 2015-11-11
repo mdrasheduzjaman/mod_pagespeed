@@ -7,7 +7,7 @@ install:
   - sudo mv /bin/nc.traditional /usr/bin/nc
   - mkdir -p ~/bin
   - cd ~/bin
-  - svn co http://src.chromium.org/svn/trunk/tools/depot_tools 2>&1 > /dev/null
+  - git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
   - cd ~/build_directory
   - ~/bin/depot_tools/gclient config https://github.com/pagespeed/mod_pagespeed.git --unmanaged --name=src
   - ~/bin/depot_tools/gclient sync --force --jobs=1
