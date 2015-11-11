@@ -1,5 +1,6 @@
 language: c++
 install:
+  - svn --version
   - mkdir -p ~/build_directory
   - mv $TRAVIS_BUILD_DIR ~/build_directory/src
   - sudo apt-get update 2>&1 > /dev/null
